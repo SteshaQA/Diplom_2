@@ -2,6 +2,7 @@ import io.restassured.response.Response;
 import model.OrderModel;
 import model.UserModel;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static data.TestData.*;
@@ -15,16 +16,19 @@ public class CreateOrderTest extends BaseAPITest {
     private UserModel newUser;
     private String accessToken;
     private Response response;
-    private Response listOfIngredients;
     private OrderModel orderModel;
     private Response responseIngredients;
+
+    @Before
+    public void createUserBeforeTests() {
+        newUser = new UserModel(EMAIL, PASSWORD, NAME);
+        response = createUser(newUser);
+    }
 
     @Test
     //можно создать заказ с авторизацией;
     public void createOrderTestSuccess(){
 
-        newUser = new UserModel(EMAIL, PASSWORD, NAME);
-        response = createUser(newUser);
         accessToken = response.jsonPath().getString("accessToken").replace("Bearer ", "");
         responseIngredients = getIngredients();
         String[] listOfIngredients = new String[RANDOM_NUMBER];
@@ -42,8 +46,6 @@ public class CreateOrderTest extends BaseAPITest {
     //нельзя создать заказ без авторизации;
     public void createOrderTestWithoutAuth(){
 
-        newUser = new UserModel(EMAIL, PASSWORD, NAME);
-        response = createUser(newUser);
         accessToken = response.jsonPath().getString("accessToken").replace("Bearer ", "");
         responseIngredients = getIngredients();
         String[] listOfIngredients = new String[RANDOM_NUMBER];
@@ -60,8 +62,6 @@ public class CreateOrderTest extends BaseAPITest {
     //нельзя создать заказ без ингредиентов;
     public void createOrderTestWithoutIngredients(){
 
-        newUser = new UserModel(EMAIL, PASSWORD, NAME);
-        response = createUser(newUser);
         accessToken = response.jsonPath().getString("accessToken").replace("Bearer ", "");
         String[] listOfIngredients = new String[0];
         orderModel = new OrderModel(listOfIngredients);
@@ -76,8 +76,6 @@ public class CreateOrderTest extends BaseAPITest {
     //нельзя создать заказ c неверным хэшем-ингредиентов;
     public void createOrderTestWithIncorrectIngredients(){
 
-        newUser = new UserModel(EMAIL, PASSWORD, NAME);
-        response = createUser(newUser);
         accessToken = response.jsonPath().getString("accessToken").replace("Bearer ", "");
         String[] listOfIngredients = new String[]{"1111", "2222", "3333"};
         orderModel = new OrderModel(listOfIngredients);

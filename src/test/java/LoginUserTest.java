@@ -2,6 +2,7 @@ import io.restassured.response.Response;
 import model.LoginModel;
 import model.UserModel;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static data.TestData.*;
@@ -20,12 +21,16 @@ public class LoginUserTest extends BaseAPITest {
     private Response responseLogin;
     private String accessTokenLogin;
 
+    @Before
+    public void createUserBeforeTests() {
+        newUser = new UserModel(EMAIL, PASSWORD, NAME);
+        response = createUser(newUser);
+    }
+
     @Test
     //можно осуществить вход под существующим пользователем;
     public void loginUserTestSuccess() {
 
-        newUser = new UserModel(EMAIL, PASSWORD, NAME);
-        response = createUser(newUser);
         accessToken = response.jsonPath().getString("accessToken").replace("Bearer ", "");
         String email = newUser.getEmail();
         String password = newUser.getPassword();
@@ -39,15 +44,30 @@ public class LoginUserTest extends BaseAPITest {
     }
 
     @Test
-    //нельзя осуществить вход с неверным логином и паролем;
-    public void loginUserTestWithIncorrectLoginAndPassword() {
+    //нельзя осуществить вход с неверным логином;
+    public void loginUserTestWithIncorrectLogin() {
 
-        newUser = new UserModel(EMAIL, PASSWORD, NAME);
-        response = createUser(newUser);
         accessToken = response.jsonPath().getString("accessToken").replace("Bearer ", "");
         String email = newUser.getEmail();
         String password = newUser.getPassword();
-        loginModel = new LoginModel(email + "ru", password + "aaa");
+        loginModel = new LoginModel(email + "ru", password);
+        responseLogin = loginUser(accessToken, loginModel);
+        if (responseLogin.getStatusCode() == HTTP_OK) {
+            accessTokenLogin = responseLogin.jsonPath().getString("accessToken").replace("Bearer ", "");
+        }
+        responseLogin.then()
+                .statusCode(HTTP_UNAUTHORIZED)
+                .body("message", equalTo("email or password are incorrect"));
+    }
+
+    @Test
+    //нельзя осуществить вход с неверным паролем;
+    public void loginUserTestWithIncorrectPassword() {
+
+        accessToken = response.jsonPath().getString("accessToken").replace("Bearer ", "");
+        String email = newUser.getEmail();
+        String password = newUser.getPassword();
+        loginModel = new LoginModel(email, password + "aaa");
         responseLogin = loginUser(accessToken, loginModel);
         if (responseLogin.getStatusCode() == HTTP_OK) {
             accessTokenLogin = responseLogin.jsonPath().getString("accessToken").replace("Bearer ", "");
